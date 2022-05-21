@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM balenalib/amd64-debian:buster
 
 ENTRYPOINT [ "/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf" ]
 

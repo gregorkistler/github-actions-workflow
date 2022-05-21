@@ -1,4 +1,4 @@
-FROM balenalib/amd64-debian:buster
+FROM debian:buster
 
 ENTRYPOINT [ "/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf" ]
 
@@ -19,7 +19,7 @@ ENV JAVA_HOME=/java
 # Install runtime packages
 RUN apt-get -qq update \
 	&& apt-get -qq install -y --no-install-recommends \
-		curl wget unzip git \
+		ca-certificates curl wget unzip git \
 		python supervisor \
 		zlibc zlib1g \
 	&& apt-get -y clean \

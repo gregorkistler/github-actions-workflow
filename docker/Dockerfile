@@ -19,6 +19,7 @@ RUN apt-get -qq update \
 		curl unzip git \
 		python supervisor \
 		zlibc zlib1g \
+	&& c_rehash \
 	&& apt-get -y clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -47,8 +48,6 @@ WORKDIR /src
 # Check out code we rely on and install play! dependencies
 RUN git clone -q https://github.com/openseedbox/openseedbox-common \
 	&& git clone --depth=1 -q https://github.com/openseedbox/openseedbox \
-	&& sed -i 's/,1.4\[/,1.5\[/' openseedbox-common/conf/dependencies.yml \
-	&& sed -i 's/,1.4\[/,1.5\[/' openseedbox/conf/dependencies.yml \
 	&& /play/play deps openseedbox-common --sync \
 	&& /play/play deps openseedbox --sync
 

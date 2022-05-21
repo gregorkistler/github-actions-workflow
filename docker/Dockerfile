@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:buster-slim
 
 ENTRYPOINT [ "/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf" ]
 
@@ -12,14 +12,10 @@ EXPOSE 443
 
 ENV JAVA_HOME=/java
 
-# See https://github.com/resin-io-library/base-images/issues/273
-# "Errors installing OpenJDK due to unexistent man pages directory"
-#RUN mkdir /usr/share/man/man1
-
 # Install runtime packages
 RUN apt-get -qq update \
 	&& apt-get -qq install -y --no-install-recommends \
-		ca-certificates curl wget unzip git \
+		ca-certificates curl unzip git \
 		python supervisor \
 		zlibc zlib1g \
 	&& apt-get -y clean \
@@ -27,7 +23,7 @@ RUN apt-get -qq update \
 
 # Install Temurin JDK from Adoptium
 RUN apt-get -qq update && apt-get -qq install -y gnupg \
-	&& wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - \
+	&& curl -sfL https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - \
 	&& echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list \
 	&& apt-get -qq update \
 	&& apt-get -qq install -y temurin-11-jdk \
@@ -37,25 +33,26 @@ RUN apt-get -qq update && apt-get -qq install -y gnupg \
 
 # Install play
 ENV PLAY_VERSION=1.4.6
-RUN wget -q "https://downloads.typesafe.com/play/${PLAY_VERSION}/play-${PLAY_VERSION}.zip" \
+RUN curl -sfLO "https://downloads.typesafe.com/play/${PLAY_VERSION}/play-${PLAY_VERSION}.zip" \
 	&& unzip -q play-${PLAY_VERSION}.zip -x play-${PLAY_VERSION}/documentation/* play-${PLAY_VERSION}/samples-and-tests/* \
 	&& mv /play-${PLAY_VERSION} /play \
 	&& rm play-${PLAY_VERSION}.zip
 
 # Install siena module to play
-RUN echo y | /play/play install siena-2.0.7 || echo "Downloading directly ... " \
-	&& curl -S -s -L -o siena-2.0.7.zip "https://www.playframework.com/modules/siena-2.0.7.zip" \
-	&& for zipfile in *.zip; do module="${zipfile%.zip}"; unzip -d /play/modules/"$module" "$zipfile"; rm "$zipfile"; done;
+RUN echo y | /play/play install siena-2.0.7
 
 WORKDIR /src
 
 # Check out code we rely on and install play! dependencies
 RUN git clone -q https://github.com/openseedbox/openseedbox-common \
 	&& git clone --depth=1 -q https://github.com/openseedbox/openseedbox \
+	&& sed -i 's/,1.4\[/,1.5\[/' openseedbox-common/conf/dependencies.yml \
+	&& sed -i 's/,1.4\[/,1.5\[/' openseedbox/conf/dependencies.yml \
 	&& /play/play deps openseedbox-common --sync \
 	&& /play/play deps openseedbox --sync
 
 # Download and compile nginx
+ENV NGINX_VERSION=1.20.2
 RUN apt-get -qq update \
 	&& apt-get -qq install -y \
 		build-essential libpcre3-dev libssl-dev zlib1g-dev \
@@ -63,9 +60,9 @@ RUN apt-get -qq update \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 	&& git clone --depth=1 -q https://github.com/evanmiller/mod_zip \
 	&& git clone --depth=1 -q https://github.com/agentzh/headers-more-nginx-module \
-	&& wget -q -O nginx.tar.gz http://nginx.org/download/nginx-1.20.2.tar.gz \
-	&& tar -xf nginx.tar.gz \
-	&& cd nginx* \
+	&& curl -sfLO "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" \
+	&& tar -xf nginx-${NGINX_VERSION}.tar.gz \
+	&& cd nginx-${NGINX_VERSION} \
 	&& ./configure --with-http_ssl_module --add-module=/src/mod_zip/ \
 		--prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf \
 		--error-log-path=/var/log/nginx/error.log --pid-path=/var/run/nginx.pid \

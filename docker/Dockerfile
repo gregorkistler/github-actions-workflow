@@ -15,7 +15,8 @@ ENV JAVA_HOME=/java
 # Install runtime packages
 RUN apt-get -qq update \
 	&& apt-get -qq install -y --no-install-recommends \
-		ca-certificates curl unzip git \
+		ca-certificates apt-transport-https \
+		curl unzip git \
 		python supervisor \
 		zlibc zlib1g \
 	&& apt-get -y clean \

@@ -18,7 +18,7 @@ RUN apt-get -qq update \
 		ca-certificates \
 		curl unzip git \
 		python supervisor \
-		zlibc zlib1g \
+		zlibc zlib1g procps \
 	&& c_rehash \
 	&& apt-get -y clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

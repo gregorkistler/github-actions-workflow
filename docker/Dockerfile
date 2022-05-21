@@ -41,7 +41,9 @@ RUN curl -sfLO "https://downloads.typesafe.com/play/${PLAY_VERSION}/play-${PLAY_
 	&& rm play-${PLAY_VERSION}.zip
 
 # Install siena module to play
-RUN echo y | /play/play install siena-2.0.7
+RUN echo y | /play/play install siena-2.0.7 || echo "Downloading directly ... " \
+	&& curl -S -s -L -o siena-2.0.7.zip "https://www.playframework.com/modules/siena-2.0.7.zip" \
+	&& for zipfile in *.zip; do module="${zipfile%.zip}"; unzip -d /play/modules/"$module" "$zipfile"; rm "$zipfile"; done;
 
 WORKDIR /src
 

@@ -13,7 +13,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/client/}
+          DOCKER_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/client
           VERSION=latest
           SHORTREF=${GITHUB_SHA::8}
 
